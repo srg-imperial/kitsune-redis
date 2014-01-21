@@ -1,0 +1,15 @@
+PING: 155555.20 requests per second
+PING (multi bulk): 147495.58 requests per second
+SET: 153389.56 requests per second
+GET: 146013.14 requests per second
+INCR: 144508.67 requests per second
+LPUSH: 155054.27 requests per second
+LPOP: 151071.00 requests per second
+SADD: 158503.97 requests per second
+SPOP: 152464.94 requests per second
+LPUSH (again, in order to bench LRANGE): 157242.14 requests per second
+LRANGE (first 100 elements): 20885.76 requests per second
+LRANGE (first 300 elements): 4987.53 requests per second
+LRANGE (first 450 elements): 3081.38 requests per second
+LRANGE (first 600 elements): 2470.48 requests per second
+

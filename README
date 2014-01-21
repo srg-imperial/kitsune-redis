@@ -1,0 +1,42 @@
+Kitsune-enabled Redis
+=====================
+
+This is a version of the Redis key-value store patched to support dynamic
+updating using Kitsune.
+
+The 'redis' directory contains versions of Redis changed minimally,
+only to enable dynamic updating. The 'redis-noref' directory is
+additionally patched to enable constant-time dynamic updates.
+
+Building
+========
+
+To build all versions, run `make` in either the 'redis' or
+'redis-noref' directories. To build a specific version, run `make` in
+any of the redis version subdirectories of redis or redis-noref.
+
+If Kitsune is not installed in your PATH, the environment variable
+KITSUNE_PATH must refer to a valid Kitsune installation (the `bin`
+directory of the core Kitsune repository will work).
+
+The build process will produce a shared object, `redis.so`, in each
+version's subdirectory.
+
+Running
+=======
+
+Use the Kitsune driver utility to run the Redis shared object as such:
+
+`driver redis.so redis.conf`
+
+Updating
+========
+
+To update Redis, use Kitsune's `doupd` script:
+
+`doupd <redis pid> <new tor version.so>`
+
+For a dynamic update to work, the target version must have been built
+with the running version specified as its previous version. All
+versions of redis are, by default, built to update from the last
+Available version. 

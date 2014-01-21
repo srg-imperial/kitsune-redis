@@ -1,0 +1,27 @@
+{
+#define REDIS_STRING 0
+#define REDIS_LIST 1
+#define REDIS_SET 2
+#define REDIS_ZSET 3
+#define REDIS_HASH 4
+}
+
+typedef dictType -> typedef dictType: {}
+
+struct aeFileEvent.clientData -> struct aeFileEvent.clientData: {
+  if ($base.mask != 0)
+    XF_INVOKE(XF_PTR($xform(struct redisClient,struct redisClient)), &$in, &$out);
+}
+
+struct aeTimeEvent.clientData -> struct aeTimeEvent.clientData: {
+  XF_INVOKE(XF_PTR($xform(struct redisClient,struct redisClient)), &$in, &$out);
+}
+  
+struct redisObject.ptr -> struct redisObject.ptr,
+struct redisClient.db -> struct redisClient.db,
+struct redisServer.db -> struct redisServer.db: {
+  $out = ($newtype(redisDb) *)$in;
+}
+
+INIT dict.c/dict_force_resize_ratio: {(*local_out)=5;}
+
