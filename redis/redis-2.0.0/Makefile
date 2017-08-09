@@ -16,10 +16,11 @@ KITSUNE_INCLUDE =
 KITSUNE_LIB =
 KITSUNE_BIN =
 endif
+GLIBC225INC = inc
 EKINC = $(KITSUNE_INCLUDE)
 EKLIB  = $(KITSUNE_LIB) -lkitsune-threads
 CFLAGS_SHARED  = -Wall -ldl -shared -fPIC -u kitsune_init_inplace
-CFLAGS = -O2 -Wall -ldl -fPIC $(EKINC) $(EKLIB)
+CFLAGS = -O2 -Wall -ldl -fPIC -I $(GLIBC225INC) $(EKINC) $(EKLIB) -I ../glibc-2.25
 EKDRV = $(KITSUNE_BIN)driver
 EKCC = $(KITSUNE_BIN)ktcc --doglobalreg --dostackvars --keepunused -include fmacros.h -include kitsune.h
 EKJOIN = $(KITSUNE_BIN)kttjoin
@@ -41,7 +42,7 @@ endif
 CCOPT= $(CFLAGS) $(CCLINK) $(ARCH) $(PROF)
 DEBUG?= -g -rdynamic -ggdb 
 
-OBJ = adlist.o ae.o anet.o dict.o redis.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o
+OBJ = adlist.o ae.o anet.o glibc225.o dict.o redis.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o
 BENCHOBJ = ae.o anet.o redis-benchmark.o sds.o adlist.o zmalloc.o
 CLIOBJ = anet.o sds.o adlist.o redis-cli.o zmalloc.o linenoise.o
 CHECKDUMPOBJ = redis-check-dump.o lzf_c.o lzf_d.o
@@ -62,6 +63,8 @@ ae_epoll.o: ae_epoll.c
 ae_kqueue.o: ae_kqueue.c
 ae_select.o: ae_select.c
 anet.o: anet.c fmacros.h anet.h
+glibc225.o: ../glibc-2.25/glibc225.c
+	$(EKCC) -c $(CFLAGS) -fvisibility=hidden $(DEBUG) $(COMPILE_TIME) $< --doktsavetypes --typesfile-out=$*.ktt
 dict.o: dict.c fmacros.h dict.h zmalloc.h
 dict2.o: dict2.c fmacros.h dict2.h zmalloc.h
 linenoise.o: linenoise.c fmacros.h
@@ -81,7 +84,14 @@ sds.o: sds.c sds.h zmalloc.h
 zipmap.o: zipmap.c zmalloc.h
 zmalloc.o: zmalloc.c config.h
 
-redis-server: $(OBJ) $(GENERATED_XFORM)
+$(GLIBC225INC)/bits/sysmacros.h:
+	mkdir -p $(GLIBC225INC)/bits
+	cp /usr/include/bits/sysmacros.h $(GLIBC225INC)/bits/sysmacros.h
+	patch -p1 < ../sysmacros.h.patch
+
+glibc255-headers: $(GLIBC225INC)/bits/sysmacros.h
+
+redis-server: glibc255-headers $(OBJ) $(GENERATED_XFORM)
 	$(CC)  -o $(RUNLIBNAME) $(CFLAGS_SHARED) $(DEBUG) $(OBJ) $(GENERATED_XFORM) $(EKINC) $(EKLIB) $(CCLINK)
 	cp redis-server.so redis-server2.so
 
@@ -107,7 +117,7 @@ $(GENERATED_XFORM): redis-$(VERSION).ktt $(USER_XFORM)
 	$(EKCC) -c $(CFLAGS) -fvisibility=hidden $(DEBUG) $(COMPILE_TIME) $< --doktsavetypes --typesfile-out=$*.ktt
 
 clean:
-	rm -rf $(RUNLIBNAME) $(BENCHPRGNAME) $(CLIPRGNAME) $(CHECKDUMPPRGNAME) $(CHECKAOFPRGNAME) *.o *.cil.c *.i *.gcda *.gcno *.gcov *.ktt $(GENERATED_XFORM)
+	rm -rf $(RUNLIBNAME) $(BENCHPRGNAME) $(CLIPRGNAME) $(CHECKDUMPPRGNAME) $(CHECKAOFPRGNAME) *.o *.cil.c *.i *.gcda *.gcno *.gcov *.ktt $(GENERATED_XFORM) $(GLIBC225INC)
 
 dep:
 	$(CC) -MM *.c
