@@ -1759,6 +1759,8 @@ static void initServer() {
         server.db[j].blockingkeys = dictCreate(&keylistDictType,NULL);
         if (server.vm_enabled)
             server.db[j].io_keys = dictCreate(&keylistDictType,NULL);
+        else
+            server.db[j].io_keys = NULL;
         server.db[j].id = j;
     }
     server.pubsub_channels = dictCreate(&keylistDictType,NULL);
