@@ -57,6 +57,7 @@ aeEventLoop *aeCreateEventLoop(void) {
     int i;
 
     eventLoop = zmalloc(sizeof(*eventLoop));
+    memset(eventLoop, 0, sizeof(*eventLoop));
     if (!eventLoop) return NULL;
     eventLoop->timeEventHead = NULL;
     eventLoop->timeEventNextId = 0;
