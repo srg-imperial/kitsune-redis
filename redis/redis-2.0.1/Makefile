@@ -41,7 +41,7 @@ endif
 CCOPT= $(CFLAGS) $(CCLINK) $(ARCH) $(PROF)
 DEBUG?= -g -rdynamic -ggdb 
 
-OBJ = adlist.o ae.o anet.o dict.o redis.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o
+OBJ = adlist.o ae.o anet.o glibc223.o dict.o redis.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o
 BENCHOBJ = ae.o anet.o redis-benchmark.o sds.o adlist.o zmalloc.o
 CLIOBJ = anet.o sds.o adlist.o redis-cli.o zmalloc.o linenoise.o
 CHECKDUMPOBJ = redis-check-dump.o lzf_c.o lzf_d.o
@@ -62,6 +62,8 @@ ae_epoll.o: ae_epoll.c
 ae_kqueue.o: ae_kqueue.c
 ae_select.o: ae_select.c
 anet.o: anet.c fmacros.h anet.h
+glibc223.o: ../glibc-2.23/glibc223.c
+	$(EKCC) -c $(CFLAGS) -fvisibility=hidden $(DEBUG) $(COMPILE_TIME) $< --doktsavetypes --typesfile-out=$*.ktt
 dict.o: dict.c fmacros.h dict.h zmalloc.h
 dict2.o: dict2.c fmacros.h dict2.h zmalloc.h
 linenoise.o: linenoise.c fmacros.h
