@@ -6697,22 +6697,49 @@ static void hgetCommand(redisClient *c) {
 
 static void hmgetCommand(redisClient *c) {
     int i;
-    robj *o, *value;
-    o = lookupKeyRead(c->db,c->argv[1]);
-    if (o != NULL && o->type != REDIS_HASH) {
-        addReply(c,shared.wrongtypeerr);
+
+    robj *o = lookupKeyRead(c->db, c->argv[1]);
+    if (o == NULL) {
+        addReplySds(c,sdscatprintf(sdsempty(),"*%d\r\n",c->argc-2));
+        for (i = 2; i < c->argc; i++) {
+            addReply(c,shared.nullbulk);
+        }
+        return;
+    } else {
+        if (o->type != REDIS_HASH) {
+            addReply(c,shared.wrongtypeerr);
+            return;
+        }
     }
 
-    /* Note the check for o != NULL happens inside the loop. This is
-     * done because objects that cannot be found are considered to be
-     * an empty hash. The reply should then be a series of NULLs. */
     addReplySds(c,sdscatprintf(sdsempty(),"*%d\r\n",c->argc-2));
-    for (i = 2; i < c->argc; i++) {
-        if (o != NULL && (value = hashGet(o,c->argv[i])) != NULL) {
-            addReplyBulk(c,value);
-            decrRefCount(value);
-        } else {
-            addReply(c,shared.nullbulk);
+    if (o->encoding == REDIS_ENCODING_ZIPMAP) {
+        unsigned char *zm = o->ptr;
+        unsigned char *v;
+        unsigned int vlen;
+        robj *field;
+
+        for (i = 2; i < c->argc; i++) {
+            field = getDecodedObject(c->argv[i]);
+            if (zipmapGet(zm,field->ptr,sdslen(field->ptr),&v,&vlen)) {
+                addReplySds(c,sdscatprintf(sdsempty(),"$%u\r\n", vlen));
+                addReplySds(c,sdsnewlen(v,vlen));
+                addReply(c,shared.crlf);
+            } else {
+                addReply(c,shared.nullbulk);
+            }
+            decrRefCount(field);
+        }
+    } else {
+        dictEntry *de;
+
+        for (i = 2; i < c->argc; i++) {
+            de = dictFind(o->ptr,c->argv[i]);
+            if (de != NULL) {
+                addReplyBulk(c,(robj*)dictGetEntryVal(de));
+            } else {
+                addReply(c,shared.nullbulk);
+            }
         }
     }
 }
